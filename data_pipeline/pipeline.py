@@ -8,9 +8,7 @@ MIN_BOOKS = 60
 MIN_CATEGORIES = 3
 
 
-# ============================================================
 # TASK 1 — SCRAPING
-# ============================================================
 
 def get_soup(url):
     response = requests.get(url, timeout=15)
@@ -45,13 +43,11 @@ def scrape_category(category_name, category_url):
 
         for article in soup.select("article.product_pod"):
 
-            # Title
             title = article.h3.a.get(
                 "title",
                 ""
             ).strip()
 
-            # Price
             price_element = article.select_one(
                 ".price_color"
             )
@@ -62,7 +58,6 @@ def scrape_category(category_name, category_url):
                 else ""
             )
 
-            # Star rating
             rating_element = article.select_one(
                 "p.star-rating"
             )
@@ -92,7 +87,6 @@ def scrape_category(category_name, category_url):
             else:
                 star_rating = ""
 
-            # Availability
             availability_element = article.select_one(
                 ".availability"
             )
@@ -114,7 +108,6 @@ def scrape_category(category_name, category_url):
                 "category": category_name
             })
 
-        # Next page
         next_link = soup.select_one(
             "li.next a"
         )
@@ -164,7 +157,6 @@ def scrape_books():
             f"{len(all_books)}"
         )
 
-        # Make sure BOTH requirements are met
         if (
             len(all_books) >= MIN_BOOKS
             and categories_scraped >= MIN_CATEGORIES
@@ -174,18 +166,12 @@ def scrape_books():
     return pd.DataFrame(all_books)
 
 
-# ============================================================
 # TASK 2 — DATA CLEANING
-# ============================================================
 
 def clean_data(df):
 
     df = df.copy()
 
-    # --------------------------------------------------------
-    # 1. Price
-    # price → price_gbp (float)
-    # --------------------------------------------------------
 
     df["price_gbp"] = (
         df["price"]
@@ -199,14 +185,6 @@ def clean_data(df):
         errors="coerce"
     )
 
-    # --------------------------------------------------------
-    # 2. Star rating
-    # One → 1
-    # Two → 2
-    # Three → 3
-    # Four → 4
-    # Five → 5
-    # --------------------------------------------------------
 
     rating_mapping = {
         "One": 1,
@@ -220,11 +198,6 @@ def clean_data(df):
         rating_mapping
     )
 
-    # --------------------------------------------------------
-    # 3. Availability
-    # "In stock" → True
-    # anything else → False
-    # --------------------------------------------------------
 
     df["in_stock"] = (
         df["availability"]
@@ -235,11 +208,7 @@ def clean_data(df):
         )
     )
 
-    # --------------------------------------------------------
-    # 4. Handle numeric parsing failures
-    # --------------------------------------------------------
 
-    # Price failure → median price
     if df["price_gbp"].isna().any():
 
         median_price = df["price_gbp"].median()
@@ -247,8 +216,7 @@ def clean_data(df):
         df["price_gbp"] = df["price_gbp"].fillna(
             median_price
         )
-
-    # Rating failure → median rating
+  
     if df["rating"].isna().any():
 
         median_rating = df["rating"].median()
@@ -257,7 +225,6 @@ def clean_data(df):
             median_rating
         )
 
-    # Rating should be an integer
     df["rating"] = (
         df["rating"]
         .round()
@@ -267,15 +234,11 @@ def clean_data(df):
     return df
 
 
-# ============================================================
 # MAIN PROGRAM
-# ============================================================
 
 if __name__ == "__main__":
 
-    # -------------------------
     # Task 1 — Scrape
-    # -------------------------
 
     raw_df = scrape_books()
 
@@ -292,9 +255,7 @@ if __name__ == "__main__":
         f"{raw_df['category'].nunique()}"
     )
 
-    # -------------------------
     # Task 2 — Clean
-    # -------------------------
 
     cleaned_df = clean_data(raw_df)
 
@@ -318,9 +279,6 @@ if __name__ == "__main__":
         .to_string(index=False)
     )
 
-    # -------------------------
-    # Data types
-    # -------------------------
 
     print("\n" + "=" * 60)
     print("DATA TYPES")
@@ -336,9 +294,6 @@ if __name__ == "__main__":
         ].dtypes
     )
 
-    # -------------------------
-    # Missing values
-    # -------------------------
 
     print("\n" + "=" * 60)
     print("MISSING VALUES")
