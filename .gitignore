@@ -1,0 +1,22 @@
+# Virtual environment
+.venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Jupyter Notebook temporary files
+.ipynb_checkpoints/
+
+# Environment variables / secrets
+.env
+.env.*
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# OS-generated files
+.DS_Store
+Thumbs.db
