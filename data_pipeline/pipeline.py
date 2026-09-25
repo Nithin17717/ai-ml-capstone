@@ -338,9 +338,7 @@ if __name__ == "__main__":
 
     raw_df = scrape_books()
 
-    print("\n" + "=" * 60)
     print("SCRAPING COMPLETE")
-    print("=" * 60)
 
     print(
         f"Total books scraped: {len(raw_df)}"
@@ -355,9 +353,7 @@ if __name__ == "__main__":
 
     cleaned_df = clean_data(raw_df)
 
-    print("\n" + "=" * 60)
     print("TASK 2 - CLEANING COMPLETE")
-    print("=" * 60)
 
     print("\nFirst 10 cleaned records:")
 
@@ -379,7 +375,6 @@ if __name__ == "__main__":
 
     print("\n" + "=" * 60)
     print("DATA TYPES")
-    print("=" * 60)
 
     print(
         cleaned_df[
@@ -394,7 +389,6 @@ if __name__ == "__main__":
 
     print("\n" + "=" * 60)
     print("MISSING VALUES")
-    print("=" * 60)
 
     print(
         cleaned_df[
@@ -412,8 +406,6 @@ if __name__ == "__main__":
 
     print("\n" + "=" * 60)
     print("TASK 4 - DATABASE CREATED")
-    print("=" * 60)
-
     print("Database: books.db")
     print("Tables: categories, books")
 
