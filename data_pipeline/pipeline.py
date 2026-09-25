@@ -2,10 +2,12 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 from urllib.parse import urljoin
+import sqlite3
 
 BASE_URL = "https://books.toscrape.com/"
 MIN_BOOKS = 60
 MIN_CATEGORIES = 3
+GBP_TO_INR = 105.50
 
 
 # TASK 1 — SCRAPING
@@ -231,7 +233,101 @@ def clean_data(df):
         .astype(int)
     )
 
+    # TASK 3 — GBP TO INR CONVERSION
+    
+    df["price_inr"] = (
+    df["price_gbp"] * GBP_TO_INR
+    ).round(2)
+
     return df
+
+
+# TASK 4 — SQLITE DATABASE
+
+def create_database(df, database_name="books.db"):
+    """
+    Create a normalized SQLite database containing:
+    1. categories
+    2. books
+    """
+
+    connection = sqlite3.connect(database_name)
+
+    # Enable foreign key enforcement
+    connection.execute("PRAGMA foreign_keys = ON")
+
+    cursor = connection.cursor()
+
+    # Drop existing tables so the database is recreated cleanly
+    cursor.execute("DROP TABLE IF EXISTS books")
+    cursor.execute("DROP TABLE IF EXISTS categories")
+
+    # Categories table
+    cursor.execute("""
+        CREATE TABLE categories (
+            category_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            category_name TEXT NOT NULL UNIQUE
+        )
+    """)
+
+    # Books table
+    cursor.execute("""
+        CREATE TABLE books (
+            book_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            price_gbp REAL NOT NULL,
+            price_inr REAL NOT NULL,
+            rating INTEGER NOT NULL,
+            in_stock BOOLEAN NOT NULL,
+            category_id INTEGER NOT NULL,
+
+            FOREIGN KEY (category_id)
+                REFERENCES categories(category_id)
+        )
+    """)
+
+    # Insert categories
+    categories = df["category"].drop_duplicates()
+
+    for category in categories:
+        cursor.execute("""
+            INSERT INTO categories (category_name)
+            VALUES (?)
+        """, (category,))
+
+    # Insert books
+    for _, row in df.iterrows():
+
+        cursor.execute("""
+            SELECT category_id
+            FROM categories
+            WHERE category_name = ?
+        """, (row["category"],))
+
+        category_id = cursor.fetchone()[0]
+
+        cursor.execute("""
+            INSERT INTO books (
+                title,
+                price_gbp,
+                price_inr,
+                rating,
+                in_stock,
+                category_id
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (
+            row["title"],
+            row["price_gbp"],
+            row["price_inr"],
+            row["rating"],
+            row["in_stock"],
+            category_id
+        ))
+
+    connection.commit()
+
+    return connection
 
 
 # MAIN PROGRAM
@@ -270,6 +366,7 @@ if __name__ == "__main__":
             [
                 "title",
                 "price_gbp",
+                "price_inr",
                 "rating",
                 "in_stock",
                 "category"
@@ -308,3 +405,16 @@ if __name__ == "__main__":
             ]
         ].isnull().sum()
     )
+
+    # Task 4 — Create Database
+    
+    connection = create_database(cleaned_df)
+
+    print("\n" + "=" * 60)
+    print("TASK 4 - DATABASE CREATED")
+    print("=" * 60)
+
+    print("Database: books.db")
+    print("Tables: categories, books")
+
+    connection.close()
